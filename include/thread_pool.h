@@ -53,7 +53,7 @@ namespace thread_pool {
         }
 
         unsigned int off_time_ms = 10;
-        std::vector<std::atomic<bool>> available_worker;
         std::vector<std::thread> workers;
+        std::vector<std::atomic<bool>> available_worker;
     };
 }
