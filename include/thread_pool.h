@@ -3,13 +3,33 @@
 #include <future>
 #include <algorithm>
 #include <vector>
+#include <iostream>
 
 namespace thread_pool {
+    template<int N>
+    struct my_placeholder {
+        static my_placeholder ph;
+    };
 
+    template<int N>
+    my_placeholder<N> my_placeholder<N>::ph;
+
+}
+
+namespace std {
+    template<int N>
+    struct is_placeholder<thread_pool::my_placeholder<N>> : std::integral_constant<int, N> { };
+}
+
+namespace thread_pool {
     thread_local int worker_id = -1;
-
     struct Thread_pool {
         Thread_pool() : Thread_pool(std::thread::hardware_concurrency()) {};
+
+        template<int... indices>
+        static auto bind_all(auto f, auto val, std::integer_sequence<int, indices...>) {
+            return std::bind(f, val, my_placeholder<indices+1>::ph...);
+        }
 
         explicit Thread_pool(unsigned int worker_count) : workers(worker_count), available_worker(worker_count){
             for (auto &w:available_worker) w = true;
@@ -23,11 +43,22 @@ namespace thread_pool {
                     if (available) {
                         available = false;
                         if (workers[w].joinable()) workers[w].join();
-                        workers[w] = std::thread([w, &available, f] ( Args... args) {
-                            worker_id = w;
-                            f (args...);
-                            available = true;
-                        }, args...);
+
+                        if constexpr( std::is_member_function_pointer<decltype(f)>::value) {
+                            workers[w] = std::thread([w, &available, f](auto o, auto ...args) {
+                                constexpr std::size_t n = sizeof...(args);
+                                worker_id = w;
+                                auto bf = Thread_pool::bind_all(f, o,  std::make_integer_sequence<int, sizeof...(args)>());
+                                bf(args...);
+                                available = true;
+                            }, args...);
+                        } else {
+                            workers[w] = std::thread([w, &available, f](auto ...args) {
+                                worker_id = w;
+                                f(args...);
+                                available = true;
+                            }, args...);
+                        }
                         return workers[w];
                     }
                 }

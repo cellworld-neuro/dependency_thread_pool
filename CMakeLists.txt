@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+set(CMAKE_CXX_STANDARD 20)
+
 project(thread_pool
         VERSION 2022.1.0
         DESCRIPTION "Simple parallel workers framework"
