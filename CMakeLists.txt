@@ -15,6 +15,8 @@ string(APPEND CMAKE_CXX_FLAGS " -fno-strict-aliasing -pthread ")
 
 add_executable(thread_pool_tests tests/thread_pool.cpp)
 
+add_executable(member tests/member.cpp)
+
 
 ###
 ### LIBRARY INSTALLATION

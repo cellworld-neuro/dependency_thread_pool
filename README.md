@@ -33,7 +33,6 @@ sudo make install
 
 ```c++
 #include "thread_pool.h"
-#include <random>
 #include <iostream>
 
 using namespace std;
@@ -42,18 +41,26 @@ using namespace thread_pool;
 int main(){
     Thread_pool tp;
     cout << "Thread_pool detected " << tp.workers.size() << " processors " << endl;
-    for (size_t i = 0;i < tp.workers.size() * 2 ; i++) {
-        auto &t = tp.run([](unsigned int ms){
-            cout << "waiting " << ms << endl;
-          std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-        }, rand() % 2000);
-    }
-    tp.wait_all();
 }
 ```
 
 
 ### Specify number of processors to use:
+
+```c++
+#include "thread_pool.h"
+#include <iostream>
+
+using namespace std;
+using namespace thread_pool;
+
+int main(){
+    Thread_pool tp(4);
+    cout << "Thread_pool initialized with " << tp.workers.size() << " parallel workers " << endl;
+}
+```
+
+### Run parallel tasks - Lambda
 
 ```c++
 #include "thread_pool.h"
@@ -64,9 +71,10 @@ using namespace std;
 using namespace thread_pool;
 
 int main(){
-    Thread_pool tp(4);
-    cout << "Thread_pool detected " << tp.workers.size() << " processors " << endl;
-    for (size_t i = 0;i < tp.workers.size() * 2 ; i++) {
+    Thread_pool tp;
+    size_t task_count = tp.workers.size() * 10;
+    cout << "Running " << task_count << " in " << tp.workers.size() << " parallel workers " << endl;
+    for (size_t i = 0;i < task_count ; i++) {
         auto &t = tp.run([](unsigned int ms){
           std::this_thread::sleep_for(std::chrono::milliseconds(ms));
         }, rand() % 2000);
@@ -75,30 +83,6 @@ int main(){
     tp.wait_all();
 }
 ```
-
-### Specify number of processors to use:
-
-```c++
-#include "thread_pool.h"
-#include <random>
-#include <iostream>
-
-using namespace std;
-using namespace thread_pool;
-
-int main(){
-    Thread_pool tp(4);
-    cout << "Thread_pool detected " << tp.workers.size() << " processors " << endl;
-    for (size_t i = 0;i < tp.workers.size() * 2 ; i++) {
-        auto &t = tp.run([](unsigned int ms){
-          std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-        }, rand() % 2000);
-        cout << "started worker " << tp.get_worker_id(t) << endl;
-    }
-    tp.wait_all();
-}
-```
-
 
 ### Getting worker id from inside the worker thread:
 
@@ -123,3 +107,66 @@ int main(){
     tp.wait_all();
 }
 ```
+
+
+
+### Run parallel tasks - Function
+
+```c++
+#include "thread_pool.h"
+#include <random>
+#include <iostream>
+
+using namespace std;
+using namespace thread_pool;
+
+void task (unsigned int ms){
+  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
+int main(){
+    Thread_pool tp;
+    size_t task_count = tp.workers.size() * 10;
+    cout << "Running " << task_count << " in " << tp.workers.size() << " parallel workers " << endl;
+    for (size_t i = 0;i < task_count ; i++) {
+        auto &t = tp.run(task, rand() % 2000);
+        cout << "started worker " << tp.get_worker_id(t) << endl;
+    }
+    tp.wait_all();
+}
+```
+
+
+### Run parallel tasks - object member
+
+```c++
+#include "thread_pool.h"
+#include <random>
+#include <iostream>
+
+using namespace std;
+using namespace thread_pool;
+
+struct Task_container {
+    void task (int ms){
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    }
+    int wait_time;
+}
+
+int main(){
+    Thread_pool tp;
+    vector<Task_container> tasks (tp.workers.size() * 10);
+    cout << "Running " << tasks.size() << " in " << tp.workers.size() << " parallel workers " << endl;
+    for (auto &task:tasks) {
+        auto &t = tp.run(Task_container::task, &task, rand() % 2000);
+        cout << "started worker " << tp.get_worker_id(t) << endl;
+    }
+    tp.wait_all();
+    for (auto &task:tasks) {
+        cout << "task waited for " << task.wait_time << " milliseconds " << endl;
+    }
+
+}
+```
+
