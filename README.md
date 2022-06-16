@@ -137,7 +137,42 @@ int main(){
 ```
 
 
-### Run parallel tasks - object member
+### Run parallel tasks - instance member method
+
+```c++
+#include "thread_pool.h"
+#include <thread>
+#include <random>
+#include <iostream>
+#include <functional>
+
+using namespace std;
+using namespace thread_pool;
+
+struct Task_container {
+    void process (int ms){
+        wait_time = ms+ms1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(wait_time));
+    }
+    int wait_time;
+};
+
+int main(){
+    Thread_pool tp;
+    vector<Task_container> tasks (tp.workers.size() * 3);
+    cout << "Running " << tasks.size() << " in " << tp.workers.size() << " parallel workers " << endl;
+    for (auto &task:tasks) {
+        auto &t = tp.run(&Task_container::process, &task, rand() % 1000);
+        cout << "started worker " << tp.get_worker_id(t) << endl;
+    }
+    tp.wait_all();
+    for (auto &task:tasks) {
+        cout << "task waited for " << task.wait_time << " milliseconds " << endl;
+    }
+}
+```
+
+### Passing parameters as reference - Function
 
 ```c++
 #include "thread_pool.h"
@@ -147,26 +182,20 @@ int main(){
 using namespace std;
 using namespace thread_pool;
 
-struct Task_container {
-    void task (int ms){
-        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-    }
-    int wait_time;
+void task (unsigned int &ms){
+  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 
 int main(){
     Thread_pool tp;
-    vector<Task_container> tasks (tp.workers.size() * 10);
-    cout << "Running " << tasks.size() << " in " << tp.workers.size() << " parallel workers " << endl;
-    for (auto &task:tasks) {
-        auto &t = tp.run(Task_container::task, &task, rand() % 2000);
+    size_t task_count = tp.workers.size() * 10;
+    cout << "Running " << task_count << " in " << tp.workers.size() << " parallel workers " << endl;
+    int ms = rand() % 2000;
+    for (size_t i = 0;i < task_count ; i++) {
+        auto &t = tp.run(task, std:ref(ms));
         cout << "started worker " << tp.get_worker_id(t) << endl;
     }
     tp.wait_all();
-    for (auto &task:tasks) {
-        cout << "task waited for " << task.wait_time << " milliseconds " << endl;
-    }
-
 }
 ```
 
