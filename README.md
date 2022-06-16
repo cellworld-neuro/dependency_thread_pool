@@ -4,7 +4,7 @@ Simple controlled concurrency.
 
 ---
 
-**[Try it out on wandbox!](https://wandbox.org/permlink/ufY2jT08MiblWNYN)**
+**[Try it out on wandbox!](https://wandbox.org/permlink/sJYSXdsxhLAbuzp7)**
 
 ## Summary
 
