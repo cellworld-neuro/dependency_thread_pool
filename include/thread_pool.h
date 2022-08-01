@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <thread_pool.h>
 
 namespace thread_pool {
     template<int N>
