@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
-#include <thread_pool.h>
 
 namespace thread_pool {
     template<int N>
@@ -60,6 +59,13 @@ namespace thread_pool {
                                 available = true;
                             }, args...);
                         }
+                        if (set_affinity) {
+                            cpu_set_t cpuset;
+                            CPU_ZERO(&cpuset);
+                            CPU_SET(w, &cpuset);
+                            int rc = pthread_setaffinity_np(workers[w].native_handle(),
+                                                            sizeof(cpu_set_t), &cpuset);
+                        }
                         return workers[w];
                     }
                 }
@@ -91,5 +97,6 @@ namespace thread_pool {
         unsigned int off_time_ms = 10;
         std::vector<std::thread> workers;
         std::vector<std::atomic<bool>> available_worker;
+        bool set_affinity = false;
     };
 }
