@@ -26,7 +26,7 @@ namespace thread_pool {
     struct Thread_pool {
         Thread_pool() : Thread_pool(std::thread::hardware_concurrency()) {};
 
-        unsigned int max_concurrency(){
+        static unsigned int max_concurrency(){
             return std::thread::hardware_concurrency();
         }
 
