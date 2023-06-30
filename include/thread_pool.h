@@ -26,6 +26,10 @@ namespace thread_pool {
     struct Thread_pool {
         Thread_pool() : Thread_pool(std::thread::hardware_concurrency()) {};
 
+        unsigned int max_concurrency(){
+            return std::thread::hardware_concurrency();
+        }
+
         template<int... indices>
         static auto bind_all(auto f, auto val, std::integer_sequence<int, indices...>) {
             return std::bind(f, val, my_placeholder<indices+1>::ph...);
